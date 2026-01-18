@@ -11,15 +11,26 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('app_label', nargs='?', type=str, help='Application name (optional)')
+        # A new argument to save to a file
+        parser.add_argument(
+            '-o', '--output',
+            type=str,
+            help='The path to the file to save the result (for example, app_name_map.json) (optional)'
+        )
 
     def handle(self, *args, **options):
         app_label = options.get('app_label')
+        output_file = options.get('output')
 
         models_map = {}
 
         # We get a list of models (either all or a specific application)
         if app_label:
-            models = apps.get_app_config(app_label).get_models()
+            try:
+                models = apps.get_app_config(app_label).get_models()
+            except LookupError:
+                self.stderr.write(self.style.ERROR(f"The application '{app_label}' was not found."))
+                return
         else:
             models = apps.get_models()
 
@@ -74,10 +85,44 @@ class Command(BaseCommand):
                 elif field.many_to_one or field.one_to_one:
                     select_candidates.append(info)
 
+            # --- SNIPPET GENERATION ---
+            # Creating lists of field names
+            select_names = [f"'{x['field_name']}'" for x in select_candidates]
+            prefetch_names = [f"'{x['field_name']}'" for x in prefetch_candidates]
+
+            # Collecting a line of code
+            snippet = f"{model.__name__}.objects"
+
+            if select_names:
+                snippet += f".select_related({', '.join(select_names)})"
+
+            if prefetch_names:
+                snippet += f".prefetch_related({', '.join(prefetch_names)})"
+
+            # If there is nothing, add .all()
+            if not select_names and not prefetch_names:
+                snippet += ".all()"
+
+            # Collecting the final object
             models_map[model_name] = {
-                "select_related (JOIN)": select_candidates,
-                "prefetch_related (2nd Query)": prefetch_candidates
+                "queryset_snippet": snippet,  # Ready-made code to copy
+                "select_related_fields": [x['field_name'] for x in select_candidates],
+                "prefetch_related_fields": [x['field_name'] for x in prefetch_candidates],
+                "details": { # Detailed information (if you need to figure out the connections)
+                    "select_related": select_candidates,
+                    "prefetch_related": prefetch_candidates
+                }
             }
 
-        # Output in JSON
-        self.stdout.write(json.dumps(models_map, indent=4, ensure_ascii=False))
+        # --- SAVE / OUTPUT ---
+        json_output = json.dumps(models_map, indent=4, ensure_ascii=False)
+
+        if output_file:
+            try:
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    f.write(json_output)
+                self.stdout.write(self.style.SUCCESS(f"Successfully saved to a file: {output_file}"))
+            except IOError as e:
+                self.stderr.write(self.style.ERROR(f"File recording error: {e}"))
+        else:
+            self.stdout.write(json_output)

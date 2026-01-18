@@ -1,4 +1,8 @@
 # Django Model Map
+[![Django CI](https://github.com/swayll/django-model-map/actions/workflows/django.yml/badge.svg)](https://github.com/swayll/django-model-map/actions/workflows/django.yml)
+[![PyPI version](https://img.shields.io/pypi/v/django-model-map.svg)](https://pypi.org/project/django-model-map/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/django-model-map.svg)](https://pypi.org/project/django-model-map/)
+[![License](https://img.shields.io/pypi/l/django-model-map.svg)](https://github.com/swayll/django-model-map/blob/main/LICENSE)
 
 **Stop guessing your query optimizations.**
 

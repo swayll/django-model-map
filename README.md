@@ -37,40 +37,44 @@ python manage.py modelmap
 # Inspect a specific app
 python manage.py modelmap [app_name]
 
-# Save to file for reference
+# Save to file for reference using stdout
 python manage.py modelmap [app_name] > relations.json
+# or export to file with command
+python manage.py modelmap [app_name] [--output[-o]] relations.json
 ```
 ## 📖 Example Output
 For a blog application with `Post`, `User`, `Tag` and `Comment` models:
 ```json
 {
     "blog.Post": {
-        "select_related (JOIN)": [
-            {
-                "field_name": "author",
-                "target_model": "users.User",
-                "is_recursive": false
-            }
+        "queryset_snippet": "Post.objects.select_related('author', 'category').prefetch_related('tags', 'comments')",
+        "select_related": [
+            "author",
+            "category"
         ],
-        "prefetch_related (2nd Query)": [
-            {
-                "field_name": "tags",
-                "target_model": "blog.Tag",
-                "is_recursive": false
-            },
-            {
-                "field_name": "comments",
-                "target_model": "blog.Comment",
-                "is_recursive": false
-            }
-        ]
+        "prefetch_related": [
+            "tags",
+            "comments"
+        ],
+        "details": {
+            "select_objects": [
+                {
+                    "field_name": "author",
+                    "target_model": "users.User",
+                    "is_recursive": false
+                },
+                 ...
+            ],
+            "prefetch_objects": [...]
+        }
     }
 }
 ```
 ## 💡 How it helps
 When writing a view, instead of opening `models.py` and mentally parsing the relationships, just look at the output:
-- Copy fields from `"select_related (JOIN)"` -> paste into `.select_related(...)`.
-- Copy fields from `"prefetch_related (2nd Query)"` -> paste into `.prefetch_related(...)`.
+- Copy fields from `"queryset_snippet"` -> paste into project.
+- Copy fields from `"select_related"` -> paste into `.select_related(...)`.
+- Copy fields from `"prefetch_related"` -> paste into `.prefetch_related(...)`.
 ## 🤝 Contributing
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 

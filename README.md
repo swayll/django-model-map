@@ -48,11 +48,11 @@ For a blog application with `Post`, `User`, `Tag` and `Comment` models:
 {
     "blog.Post": {
         "queryset_snippet": "Post.objects.select_related('author', 'category').prefetch_related('tags', 'comments')",
-        "select_related": [
+        "select_related_fields": [
             "author",
             "category"
         ],
-        "prefetch_related": [
+        "prefetch_related_fields": [
             "tags",
             "comments"
         ],

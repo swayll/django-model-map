@@ -1,7 +1,11 @@
 from django.db import models
 
+class User(models.Model):
+    username = models.CharField(max_length=50)
+
 class Author(models.Model):
     name = models.CharField(max_length=100)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
 
 class Tag(models.Model):
     title = models.CharField(max_length=50)

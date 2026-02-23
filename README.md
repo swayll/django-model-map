@@ -11,6 +11,7 @@
 ## 🚀 Features
 
 - **Automatic Classification**: Distinguishes between `select_related` (ForeignKey, OneToOne) and `prefetch_related` (ManyToMany, Reverse FK).
+- **Deep Inspection**: Supports configurable nesting levels for mapping nested relationships (e.g., `prefetch_related('lvl1__lvl2__lvl3')`).
 - **Reverse Relation Discovery**: Finds standard `_set` accessors and custom `related_name` attributes.
 - **Recursion Detection**: Identifies self-referencing models.
 - **JSON Output**: Easy to read, parse, or integrate into other tools.
@@ -45,6 +46,9 @@ python manage.py modelmap [app_name]
 python manage.py modelmap [app_name] > relations.json
 # or export to file with command
 python manage.py modelmap [app_name] [--output[-o]] relations.json
+
+# Specify inspection nesting level (default: 1)
+python manage.py modelmap [app_name] --depth 2
 ```
 ## 📖 Example Output
 For a blog application with `Post`, `User`, `Tag` and `Comment` models:
@@ -75,7 +79,8 @@ For a blog application with `Post`, `User`, `Tag` and `Comment` models:
 }
 ```
 ## 💡 How it helps
-When writing a view, instead of opening `models.py` and mentally parsing the relationships, just look at the output:
+When writing a view, instead of opening `models.py` and mentally parsing the relationships, just look at the output. With the `--depth` argument, you can automatically discover deeply nested relationships that need optimization:
+
 - Copy fields from `"queryset_snippet"` -> paste into project.
 - Copy fields from `"select_related"` -> paste into `.select_related(...)`.
 - Copy fields from `"prefetch_related"` -> paste into `.prefetch_related(...)`.
@@ -84,3 +89,4 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 
 ## 📄 License
 [MIT](https://github.com/swayll/django-model-map/tree/main#MIT-1-ov-file)
+

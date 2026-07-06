@@ -65,7 +65,7 @@ For a blog application with `Post`, `User`, `Tag` and `Comment` models:
             "comments"
         ],
         "details": {
-            "select_objects": [
+            "select_related": [
                 {
                     "field_name": "author",
                     "target_model": "users.User",
@@ -73,7 +73,7 @@ For a blog application with `Post`, `User`, `Tag` and `Comment` models:
                 },
                  ...
             ],
-            "prefetch_objects": [...]
+            "prefetch_related": [...]
         }
     }
 }
@@ -82,8 +82,8 @@ For a blog application with `Post`, `User`, `Tag` and `Comment` models:
 When writing a view, instead of opening `models.py` and mentally parsing the relationships, just look at the output. With the `--depth` argument, you can automatically discover deeply nested relationships that need optimization:
 
 - Copy fields from `"queryset_snippet"` -> paste into project.
-- Copy fields from `"select_related"` -> paste into `.select_related(...)`.
-- Copy fields from `"prefetch_related"` -> paste into `.prefetch_related(...)`.
+- Copy fields from `"select_related_fields"` -> paste into `.select_related(...)`.
+- Copy fields from `"prefetch_related_fields"` -> paste into `.prefetch_related(...)`.
 ## 🤝 Contributing
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 

@@ -1,30 +1,42 @@
 import json
-from django.core.management.base import BaseCommand
+from typing import Any
+
 from django.apps import apps
+from django.core.management.base import BaseCommand
+from django.db import models
+
 
 class Command(BaseCommand):
-    """
-    Generates a JSON map of model relationships for query optimization
-    """
-
     help = 'Generates a JSON map of model relationships for query optimization'
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: Any) -> None:
         parser.add_argument('app_label', nargs='?', type=str, help='Application name (optional)')
         # A new argument to save to a file
         parser.add_argument(
-            '-o', '--output',
+            '-o',
+            '--output',
             type=str,
-            help='The path to the file to save the result (for example, app_name_map.json) (optional)'
+            help=(
+                'The path to the file to save the result '
+                '(for example, app_name_map.json) (optional)'
+            ),
         )
         parser.add_argument(
-            '-d', '--depth',
+            '-d',
+            '--depth',
             type=int,
             default=1,
-            help='The maximum depth of nesting for relations (default: 1)'
+            help='The maximum depth of nesting for relations (default: 1)',
         )
 
-    def discover_relations(self, model, max_depth, current_depth=1, prefix='', is_pure_select=True):
+    def discover_relations(
+        self,
+        model: type[models.Model],
+        max_depth: int,
+        current_depth: int = 1,
+        prefix: str = '',
+        is_pure_select: bool = True,
+    ) -> tuple[list[dict], list[dict]]:
         select_candidates = []
         prefetch_candidates = []
 
@@ -49,15 +61,15 @@ class Command(BaseCommand):
                 continue
 
             target_model = field.related_model
-            target_model_label = target_model._meta.label if target_model else "Generic"
+            target_model_label = target_model._meta.label if target_model else 'Generic'
             is_self = target_model == model
 
-            full_name = f"{prefix}{name}"
+            full_name = f'{prefix}{name}'
 
             info = {
-                "field_name": full_name,
-                "target_model": target_model_label,
-                "is_recursive": is_self
+                'field_name': full_name,
+                'target_model': target_model_label,
+                'is_recursive': is_self,
             }
 
             # Separation logic select vs prefetch
@@ -85,15 +97,15 @@ class Command(BaseCommand):
                     target_model,
                     max_depth,
                     current_depth + 1,
-                    f"{full_name}__",
-                    is_field_pure_select
+                    f'{full_name}__',
+                    is_field_pure_select,
                 )
                 select_candidates.extend(s)
                 prefetch_candidates.extend(p)
 
         return select_candidates, prefetch_candidates
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         app_label = options.get('app_label')
         output_file = options.get('output')
         max_depth = options.get('depth')
@@ -111,7 +123,7 @@ class Command(BaseCommand):
             models = apps.get_models()
 
         for model in models:
-            model_name = f"{model._meta.app_label}.{model.__name__}"
+            model_name = f'{model._meta.app_label}.{model.__name__}'
 
             select_candidates, prefetch_candidates = self.discover_relations(model, max_depth)
 
@@ -121,27 +133,27 @@ class Command(BaseCommand):
             prefetch_names = [f"'{x['field_name']}'" for x in prefetch_candidates]
 
             # Collecting a line of code
-            snippet = f"{model.__name__}.objects"
+            snippet = f'{model.__name__}.objects'
 
             if select_names:
-                snippet += f".select_related({', '.join(select_names)})"
+                snippet += f'.select_related({", ".join(select_names)})'
 
             if prefetch_names:
-                snippet += f".prefetch_related({', '.join(prefetch_names)})"
+                snippet += f'.prefetch_related({", ".join(prefetch_names)})'
 
             # If there is nothing, add .all()
             if not select_names and not prefetch_names:
-                snippet += ".all()"
+                snippet += '.all()'
 
             # Collecting the final object
             models_map[model_name] = {
-                "queryset_snippet": snippet,  # Ready-made code to copy
-                "select_related_fields": [x['field_name'] for x in select_candidates],
-                "prefetch_related_fields": [x['field_name'] for x in prefetch_candidates],
-                "details": { # Detailed information (if you need to figure out the connections)
-                    "select_related": select_candidates,
-                    "prefetch_related": prefetch_candidates
-                }
+                'queryset_snippet': snippet,  # Ready-made code to copy
+                'select_related_fields': [x['field_name'] for x in select_candidates],
+                'prefetch_related_fields': [x['field_name'] for x in prefetch_candidates],
+                'details': {  # Detailed information (if you need to figure out the connections)
+                    'select_related': select_candidates,
+                    'prefetch_related': prefetch_candidates,
+                },
             }
 
         # --- SAVE / OUTPUT ---
@@ -151,8 +163,9 @@ class Command(BaseCommand):
             try:
                 with open(output_file, 'w', encoding='utf-8') as f:
                     f.write(json_output)
-                self.stdout.write(self.style.SUCCESS(f"Successfully saved to a file: {output_file}"))
-            except IOError as e:
-                self.stderr.write(self.style.ERROR(f"File recording error: {e}"))
+                msg = f'Successfully saved to file: {output_file}'
+                self.stdout.write(self.style.SUCCESS(msg))
+            except OSError as e:
+                self.stderr.write(self.style.ERROR(f'File recording error: {e}'))
         else:
             self.stdout.write(json_output)

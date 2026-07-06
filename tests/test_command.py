@@ -1,7 +1,9 @@
 import json
 from io import StringIO
+
 from django.core.management import call_command
 from django.test import TestCase
+
 
 class ModelMapCommandTests(TestCase):
     def test_output_structure(self):
@@ -30,9 +32,9 @@ class ModelMapCommandTests(TestCase):
 
         snippet = data['tests.Post']['queryset_snippet']
 
-        self.assertIn("Post.objects", snippet)
-        self.assertIn(".select_related(", snippet)
-        self.assertIn(".prefetch_related(", snippet)
+        self.assertIn('Post.objects', snippet)
+        self.assertIn('.select_related(', snippet)
+        self.assertIn('.prefetch_related(', snippet)
         self.assertIn("'author'", snippet)
         self.assertIn("'tags'", snippet)
 

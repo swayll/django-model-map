@@ -30,6 +30,11 @@ jobs:
           pip install .
           # pip install -r requirements.txt
 
+      - name: Lint with ruff
+        run: |
+          pip install ruff
+          ruff check .
+
       - name: Run Tests
         run: |
           python runtests.py
